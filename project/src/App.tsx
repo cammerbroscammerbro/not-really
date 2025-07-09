@@ -85,6 +85,7 @@ function App() {
   const [currentRound, setCurrentRound] = useState(0);
   const [adShownForRound5, setAdShownForRound5] = useState(false);
   const [gameStateBeforeAd, setGameStateBeforeAd] = useState<GameState>('idle');
+  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Enhanced sound effects
   const playClickSound = useCallback(() => {
@@ -327,6 +328,11 @@ function App() {
     }
   }, [gameState, playSequence]);
 
+  // Add getCurrentSymbols function back
+  const getCurrentSymbols = useCallback(() => {
+    return symbolSets[currentRound % symbolSets.length];
+  }, [currentRound]);
+
   const currentSymbols = getCurrentSymbols();
 
   // Remove all references to audioRef in useEffect
@@ -343,8 +349,34 @@ function App() {
     };
   }, []);
 
+  // Add background music using <audio> and user interaction for autoplay compliance
+  useEffect(() => {
+    const startBgMusic = () => {
+      if (bgAudioRef.current) {
+        bgAudioRef.current.volume = 0.18;
+        bgAudioRef.current.play().catch(() => {});
+      }
+      window.removeEventListener('pointerdown', startBgMusic);
+      window.removeEventListener('keydown', startBgMusic);
+    };
+    window.addEventListener('pointerdown', startBgMusic);
+    window.addEventListener('keydown', startBgMusic);
+    return () => {
+      window.removeEventListener('pointerdown', startBgMusic);
+      window.removeEventListener('keydown', startBgMusic);
+    };
+  }, []);
+
+  // Add effect to mute/unmute background music when soundEnabled changes
+  useEffect(() => {
+    if (bgAudioRef.current) {
+      bgAudioRef.current.muted = !soundEnabled;
+    }
+  }, [soundEnabled]);
+
   return (
     <>
+      <audio ref={bgAudioRef} src="/snowy-peaks-270901.mp3" loop preload="auto" style={{ display: 'none' }} />
       <div className={`min-h-screen flex items-center justify-center p-4 transition-all duration-500 ${
         gameState === 'watching' ? 'bg-gray-800' : 'bg-gray-900'
       }`}>
