@@ -526,7 +526,7 @@ function App() {
           </div>
 
           {/* Game Controls */}
-          <div className={`flex gap-4 justify-center transition-all duration-300 ${
+          <div className={`flex flex-col gap-2 justify-center items-center transition-all duration-300 ${
             gameState === 'watching' ? 'opacity-40 pointer-events-none' : 'opacity-100'
           }`}>
             {gameState === 'idle' && (
@@ -549,11 +549,36 @@ function App() {
             )}
             {gameState === 'gameOver' && (
               <button
-                onClick={() => setGameState('watching')}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold shadow-lg"
+                onClick={async () => {
+                  if (window.CrazyGames?.SDK?.ad) {
+                    const callbacks = {
+                      adStarted: () => {
+                        if (bgAudioRef.current) bgAudioRef.current.muted = true;
+                      },
+                      adFinished: () => {
+                        if (bgAudioRef.current) bgAudioRef.current.muted = !soundEnabled;
+                        setGameState('playing');
+                        setPlayerSequence([]);
+                        setActiveColor(null);
+                      },
+                      adError: () => {
+                        if (bgAudioRef.current) bgAudioRef.current.muted = !soundEnabled;
+                        setGameState('playing');
+                        setPlayerSequence([]);
+                        setActiveColor(null);
+                      }
+                    };
+                    window.CrazyGames.SDK.ad.requestAd('rewarded', callbacks);
+                  } else {
+                    setGameState('playing');
+                    setPlayerSequence([]);
+                    setActiveColor(null);
+                  }
+                }}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold shadow-lg mt-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                Revive & Repeat
+                Revive
               </button>
             )}
           </div>
