@@ -367,13 +367,6 @@ function App() {
     };
   }, []);
 
-  // Add effect to mute/unmute background music when soundEnabled changes
-  useEffect(() => {
-    if (bgAudioRef.current) {
-      bgAudioRef.current.muted = !soundEnabled;
-    }
-  }, [soundEnabled]);
-
   return (
     <>
       <audio ref={bgAudioRef} src={require('../../snowy-peaks-270901.mp3')} loop preload="auto" style={{ display: 'none' }} />
