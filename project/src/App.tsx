@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, RotateCcw, Trophy, Volume2, VolumeX, Circle, Square, Triangle, Star, Heart, Diamond } from 'lucide-react';
+import { useRef } from 'react';
 
 type GameState = 'idle' | 'playing' | 'watching' | 'gameOver' | 'adPlaying';
 type Color = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange';
@@ -85,7 +86,7 @@ function App() {
   const [currentRound, setCurrentRound] = useState(0);
   const [adShownForRound5, setAdShownForRound5] = useState(false);
   const [gameStateBeforeAd, setGameStateBeforeAd] = useState<GameState>('idle');
-  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bgAudioRef = useRef(null);
 
   // Enhanced sound effects
   const playClickSound = useCallback(() => {
@@ -328,11 +329,6 @@ function App() {
     }
   }, [gameState, playSequence]);
 
-  // Add getCurrentSymbols function back
-  const getCurrentSymbols = useCallback(() => {
-    return symbolSets[currentRound % symbolSets.length];
-  }, [currentRound]);
-
   const currentSymbols = getCurrentSymbols();
 
   // Remove all references to audioRef in useEffect
@@ -571,4 +567,5 @@ function App() {
   );
 }
 
-export default App;
+export default App;cw className="w-5 h-5" />
+                Reset
