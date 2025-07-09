@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, RotateCcw, Trophy, Volume2, VolumeX, Circle, Square, Triangle, Star, Heart, Diamond } from 'lucide-react';
-import { useRef } from 'react';
 
 type GameState = 'idle' | 'playing' | 'watching' | 'gameOver' | 'adPlaying';
 type Color = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange';
@@ -86,7 +85,6 @@ function App() {
   const [currentRound, setCurrentRound] = useState(0);
   const [adShownForRound5, setAdShownForRound5] = useState(false);
   const [gameStateBeforeAd, setGameStateBeforeAd] = useState<GameState>('idle');
-  const bgAudioRef = useRef(null);
 
   // Enhanced sound effects
   const playClickSound = useCallback(() => {
@@ -345,27 +343,8 @@ function App() {
     };
   }, []);
 
-  // Add background music using <audio> and user interaction for autoplay compliance
-  useEffect(() => {
-    const startBgMusic = () => {
-      if (bgAudioRef.current) {
-        bgAudioRef.current.volume = 0.18;
-        bgAudioRef.current.play().catch(() => {});
-      }
-      window.removeEventListener('pointerdown', startBgMusic);
-      window.removeEventListener('keydown', startBgMusic);
-    };
-    window.addEventListener('pointerdown', startBgMusic);
-    window.addEventListener('keydown', startBgMusic);
-    return () => {
-      window.removeEventListener('pointerdown', startBgMusic);
-      window.removeEventListener('keydown', startBgMusic);
-    };
-  }, []);
-
   return (
     <>
-      <audio ref={bgAudioRef} src={require('../../snowy-peaks-270901.mp3')} loop preload="auto" style={{ display: 'none' }} />
       <div className={`min-h-screen flex items-center justify-center p-4 transition-all duration-500 ${
         gameState === 'watching' ? 'bg-gray-800' : 'bg-gray-900'
       }`}>
@@ -567,5 +546,4 @@ function App() {
   );
 }
 
-export default App;cw className="w-5 h-5" />
-                Reset
+export default App;
