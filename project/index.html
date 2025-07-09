@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Memory - Test Your Memory Skills</title>
+    <meta name="description" content="A fun and challenging color memory game. Test your memory skills by remembering and repeating color sequences!">
+  </head>
+  <body>
+    <div id="root"></div>
+    <audio id="bg-music" src="../snowy-peaks-270901.mp3" loop preload="auto" style="display:none"></audio>
+    <script>
+      function startAudio() {
+        var audio = document.getElementById('bg-music');
+        if (audio) {
+          audio.volume = 0.18;
+          audio.play().catch(() => {});
+        }
+        window.removeEventListener('pointerdown', startAudio);
+        window.removeEventListener('keydown', startAudio);
+      }
+      window.addEventListener('pointerdown', startAudio);
+      window.addEventListener('keydown', startAudio);
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
