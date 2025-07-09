@@ -85,88 +85,13 @@ function App() {
   const [currentRound, setCurrentRound] = useState(0);
   const [adShownForRound5, setAdShownForRound5] = useState(false);
   const [gameStateBeforeAd, setGameStateBeforeAd] = useState<GameState>('idle');
-
-  // Audio context and background music refs
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const backgroundMusicRef = useRef<OscillatorNode | null>(null);
-  const backgroundGainRef = useRef<GainNode | null>(null);
-
-  // Get current symbol set based on round
-  const getCurrentSymbols = useCallback(() => {
-    return symbolSets[currentRound % symbolSets.length];
-  }, [currentRound]);
-
-  // Initialize audio context
-  const initAudioContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    return audioContextRef.current;
-  }, []);
-
-  // Background music system
-  const startBackgroundMusic = useCallback(() => {
-    if (!soundEnabled || gameState === 'adPlaying') return;
-    
-    const audioContext = initAudioContext();
-    if (backgroundMusicRef.current) return; // Already playing
-
-    // Create a simple ambient background track
-    const oscillator1 = audioContext.createOscillator();
-    const oscillator2 = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    const filterNode = audioContext.createBiquadFilter();
-
-    backgroundGainRef.current = gainNode;
-    backgroundMusicRef.current = oscillator1;
-
-    // Set up ambient pad sound
-    oscillator1.type = 'sine';
-    oscillator2.type = 'triangle';
-    oscillator1.frequency.setValueAtTime(220, audioContext.currentTime); // A3
-    oscillator2.frequency.setValueAtTime(330, audioContext.currentTime); // E4
-
-    // Low-pass filter for ambient effect
-    filterNode.type = 'lowpass';
-    filterNode.frequency.setValueAtTime(800, audioContext.currentTime);
-    filterNode.Q.setValueAtTime(1, audioContext.currentTime);
-
-    // Very quiet background volume
-    gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
-
-    // Connect nodes
-    oscillator1.connect(filterNode);
-    oscillator2.connect(filterNode);
-    filterNode.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    // Start oscillators
-    oscillator1.start();
-    oscillator2.start();
-
-    // Add subtle frequency modulation for ambient effect
-    const lfo = audioContext.createOscillator();
-    const lfoGain = audioContext.createGain();
-    lfo.frequency.setValueAtTime(0.1, audioContext.currentTime);
-    lfoGain.gain.setValueAtTime(5, audioContext.currentTime);
-    lfo.connect(lfoGain);
-    lfoGain.connect(oscillator1.frequency);
-    lfo.start();
-  }, [soundEnabled, gameState, initAudioContext]);
-
-  const stopBackgroundMusic = useCallback(() => {
-    if (backgroundMusicRef.current) {
-      backgroundMusicRef.current.stop();
-      backgroundMusicRef.current = null;
-      backgroundGainRef.current = null;
-    }
-  }, []);
+  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Enhanced sound effects
   const playClickSound = useCallback(() => {
     if (!soundEnabled || gameState === 'adPlaying') return;
     
-    const audioContext = initAudioContext();
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -182,12 +107,12 @@ function App() {
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.1);
-  }, [soundEnabled, gameState, initAudioContext]);
+  }, [soundEnabled, gameState]);
 
   const playSuccessSound = useCallback(() => {
     if (!soundEnabled || gameState === 'adPlaying') return;
     
-    const audioContext = initAudioContext();
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -205,12 +130,12 @@ function App() {
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.4);
-  }, [soundEnabled, gameState, initAudioContext]);
+  }, [soundEnabled, gameState]);
 
   const playErrorSound = useCallback(() => {
     if (!soundEnabled || gameState === 'adPlaying') return;
     
-    const audioContext = initAudioContext();
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -227,7 +152,7 @@ function App() {
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
-  }, [soundEnabled, gameState, initAudioContext]);
+  }, [soundEnabled, gameState]);
 
   // Color sequence sound effects
   const playSound = useCallback((color: Color) => {
@@ -242,7 +167,7 @@ function App() {
       orange: 783.99, // G5
     };
 
-    const audioContext = initAudioContext();
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -257,20 +182,7 @@ function App() {
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
-  }, [soundEnabled, gameState, initAudioContext]);
-
-  // Start background music when game starts
-  useEffect(() => {
-    if (gameState === 'playing' || gameState === 'watching') {
-      startBackgroundMusic();
-    } else {
-      stopBackgroundMusic();
-    }
-
-    return () => {
-      stopBackgroundMusic();
-    };
-  }, [gameState, startBackgroundMusic, stopBackgroundMusic]);
+  }, [soundEnabled, gameState]);
 
   // CrazyGames Ad Integration
   const showMidgameAd = useCallback(() => {
@@ -284,7 +196,7 @@ function App() {
         console.log('Start midgame ad');
         setGameStateBeforeAd(gameState);
         setGameState('adPlaying');
-        stopBackgroundMusic(); // Stop background music during ad
+        // stopBackgroundMusic(); // Stop background music during ad
       },
       adFinished: () => {
         console.log('End midgame ad');
@@ -299,7 +211,7 @@ function App() {
     };
 
     window.CrazyGames.SDK.ad.requestAd('midgame', callbacks);
-  }, [gameState, gameStateBeforeAd, stopBackgroundMusic]);
+  }, [gameState, gameStateBeforeAd]);
 
   const generateNewColor = useCallback(() => {
     return colors[Math.floor(Math.random() * colors.length)];
@@ -406,8 +318,8 @@ function App() {
     setActiveColor(null);
     setAdShownForRound5(false);
     playClickSound();
-    stopBackgroundMusic();
-  }, [playClickSound, stopBackgroundMusic]);
+    // stopBackgroundMusic();
+  }, [playClickSound]);
 
   useEffect(() => {
     if (gameState === 'watching') {
@@ -415,6 +327,11 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [gameState, playSequence]);
+
+  // Add getCurrentSymbols function back
+  const getCurrentSymbols = useCallback(() => {
+    return symbolSets[currentRound % symbolSets.length];
+  }, [currentRound]);
 
   const currentSymbols = getCurrentSymbols();
 
@@ -432,8 +349,34 @@ function App() {
     };
   }, []);
 
+  // Add background music using <audio> and user interaction for autoplay compliance
+  useEffect(() => {
+    const startBgMusic = () => {
+      if (bgAudioRef.current) {
+        bgAudioRef.current.volume = 0.18;
+        bgAudioRef.current.play().catch(() => {});
+      }
+      window.removeEventListener('pointerdown', startBgMusic);
+      window.removeEventListener('keydown', startBgMusic);
+    };
+    window.addEventListener('pointerdown', startBgMusic);
+    window.addEventListener('keydown', startBgMusic);
+    return () => {
+      window.removeEventListener('pointerdown', startBgMusic);
+      window.removeEventListener('keydown', startBgMusic);
+    };
+  }, []);
+
+  // Add effect to mute/unmute background music when soundEnabled changes
+  useEffect(() => {
+    if (bgAudioRef.current) {
+      bgAudioRef.current.muted = !soundEnabled;
+    }
+  }, [soundEnabled]);
+
   return (
     <>
+      <audio ref={bgAudioRef} src={require('../../snowy-peaks-270901.mp3')} loop preload="auto" style={{ display: 'none' }} />
       <div className={`min-h-screen flex items-center justify-center p-4 transition-all duration-500 ${
         gameState === 'watching' ? 'bg-gray-800' : 'bg-gray-900'
       }`}>
@@ -602,6 +545,15 @@ function App() {
               >
                 <RotateCcw className="w-5 h-5" />
                 Reset
+              </button>
+            )}
+            {gameState === 'gameOver' && (
+              <button
+                onClick={() => setGameState('watching')}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold shadow-lg"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                Revive & Repeat
               </button>
             )}
           </div>
